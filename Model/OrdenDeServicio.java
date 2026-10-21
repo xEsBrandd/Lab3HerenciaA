@@ -19,8 +19,7 @@ public abstract class OrdenDeServicio {
             boolean esMetropolitana) {
 
         this.codigo = textoValido(codigo, "Código");
-        this.nombreCliente = textoValido(
-                nombreCliente, "Nombre del cliente");
+        this.nombreCliente = textoValido(nombreCliente, "Cliente");
         this.direccion = textoValido(direccion, "Dirección");
 
         positivo(horasEstimadas, "Horas estimadas");
@@ -103,7 +102,7 @@ public abstract class OrdenDeServicio {
 
         if (resultado == null) {
             throw new IllegalArgumentException(
-                    "Debe indicar el resultado de la visita.");
+                    "Debe indicar el resultado.");
         }
 
         if (resultado == ResultadoVisita.COMPLETADA) {

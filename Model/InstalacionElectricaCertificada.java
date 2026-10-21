@@ -23,16 +23,12 @@ public class InstalacionElectricaCertificada extends Instalacion {
         );
 
         positivo(valorMateriales, "Valor de materiales");
-
         this.valorMateriales = valorMateriales;
     }
 
     @Override
     public double calcularTotal() {
-        double certificado = 120;
-        double garantia = valorMateriales * 0.05;
-
-        return super.calcularTotal() + certificado + garantia;
+        return super.calcularTotal() + 120 + valorMateriales * 0.05;
     }
 
     @Override

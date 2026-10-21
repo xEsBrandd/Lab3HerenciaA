@@ -56,6 +56,7 @@ public class MantenimientoAireAcondicionado
 
     @Override
     public boolean esCompatible(Cuadrilla cuadrilla) {
-        return cuadrilla != null && cuadrilla.estaCertificadaEnRefrigeracion();
+        return cuadrilla != null
+                && cuadrilla.estaCertificadaEnRefrigeracion();
     }
 }

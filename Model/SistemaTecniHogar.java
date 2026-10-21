@@ -25,38 +25,31 @@ public class SistemaTecniHogar {
                 || !ingresos.isEmpty()) {
 
             throw new IllegalStateException(
-                    "Los datos iniciales solo se cargan en un sistema vacío.");
+                    "Los datos iniciales solo se cargan "
+                    + "en un sistema vacío.");
         }
 
-        // Se agregan directamente para no generar ingresos iniciales.
+        // los agregue para no generar ingresos :=)
         ordenes.add(new Diagnostico(
                 "D01", "Ana López", "Zona 1", 1, true));
-
         ordenes.add(new Diagnostico(
                 "D02", "Luis Pérez", "Villa Nueva", 1.5, false));
-
         ordenes.add(new Instalacion(
                 "I01", "María Díaz", "Zona 10", 2.5, true, 5));
-
         ordenes.add(new Instalacion(
                 "I02", "Carlos Ruiz", "Amatitlán", 2.2, false, 1));
-
         ordenes.add(new InstalacionElectricaCertificada(
                 "E01", "Sofía Paz", "Zona 7",
                 2.5, true, 5, 2000));
-
         ordenes.add(new InstalacionElectricaCertificada(
                 "E02", "Pedro León", "Mixco",
                 1.2, false, 2, 1000));
-
         ordenes.add(new MantenimientoAireAcondicionado(
                 "M01", "Elena Soto", "Zona 4",
                 1.5, true, 9000));
-
         ordenes.add(new MantenimientoAireAcondicionado(
                 "M02", "Diego Sol", "Zona 14",
                 2, true, 60000));
-
         cuadrillas.add(new Cuadrilla("C01", 8, true));
         cuadrillas.add(new Cuadrilla("C02", 6, false));
         cuadrillas.add(new Cuadrilla("C03", 4, true));
@@ -82,7 +75,7 @@ public class SistemaTecniHogar {
                     "Solo se pueden registrar órdenes nuevas.");
         }
 
-        // Se valida el cobro antes de modificar las listas.
+        // Validar antes de modificar las listas.
         MovimientoIngreso cobro = new MovimientoIngreso(
                 orden,
                 ConceptoIngreso.REGISTRO,
@@ -205,7 +198,6 @@ public class SistemaTecniHogar {
     public void iniciarJornada(String codigoJornada) {
         Jornada jornada = buscarJornada(codigoJornada);
 
-        // Primero se validan todas las condiciones.
         jornada.validarInicio();
 
         ArrayList<MovimientoIngreso> cargos = new ArrayList<>();
@@ -220,7 +212,6 @@ public class SistemaTecniHogar {
             }
         }
 
-        // Los cargos solo se guardan cuando inicia la jornada.
         jornada.iniciar();
         ingresos.addAll(cargos);
     }
@@ -293,11 +284,9 @@ public class SistemaTecniHogar {
             }
         }
 
-        if (texto.length() == 0) {
-            return "No hay órdenes.";
-        }
-
-        return texto.toString();
+        return texto.length() == 0
+                ? "No hay órdenes."
+                : texto.toString();
     }
 
     public double calcularIngresoPorConcepto(
@@ -355,10 +344,8 @@ public class SistemaTecniHogar {
             ));
         }
 
-        if (texto.length() == 0) {
-            return "No hay ingresos.";
-        }
-
-        return texto.toString();
+        return texto.length() == 0
+                ? "No hay ingresos."
+                : texto.toString();
     }
 }

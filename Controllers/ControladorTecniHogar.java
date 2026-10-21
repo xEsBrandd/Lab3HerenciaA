@@ -1,127 +1,117 @@
 package Controllers;
 
+import Model.*;
+import View.Vista1;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Locale;
-import java.util.NoSuchElementException;
+import java.util.concurrent.CancellationException;
 
-import Model.ConceptoIngreso;
-import Model.Cuadrilla;
-import Model.Diagnostico;
-import Model.Instalacion;
-import Model.InstalacionElectricaCertificada;
-import Model.MantenimientoAireAcondicionado;
-import Model.OrdenDeServicio;
-import Model.ResultadoVisita;
-import Model.SistemaTecniHogar;
-import View.VistaConsola;
-
-public class ControladorTecniHogar {
+public class ControladorTecniHogar implements ActionListener {
 
     private final SistemaTecniHogar sistema;
-    private final VistaConsola vista;
+    private final Vista1 vista;
 
     public ControladorTecniHogar(
             SistemaTecniHogar sistema,
-            VistaConsola vista) {
+            Vista1 vista) {
 
         this.sistema = sistema;
         this.vista = vista;
+
+        vista.conectarControlador(this);
     }
 
-    public void ejecutar() {
+    public void iniciar() {
         sistema.cargarDatosIniciales();
 
-        vista.mostrarMensaje(
-                "Bienvenido. Se cargaron 8 órdenes y 3 cuadrillas "
-                + "sin ingresos iniciales.");
+        vista.mostrarResultado(
+                "Bienvenido a TecniHogar.\n\n"
+                + "Se cargaron 8 órdenes pendientes y 3 cuadrillas.\n"
+                + "Ingresos iniciales: Q0.00.\n\n"
+                + "Selecciona una operación a la izquierda."
+        );
 
-        boolean continuar = true;
+        vista.mostrarVentana();
+    }
 
-        while (continuar) {
-            try {
-                int opcion = vista.mostrarMenu();
+    @Override
+    public void actionPerformed(ActionEvent evento) {
+        try {
+            switch (evento.getActionCommand()) {
+                case "GENERAR":
+                    generarCotizacion();
+                    break;
 
-                switch (opcion) {
-                    case 1:
-                        cotizar();
-                        break;
+                case "REGISTRAR_ORDEN":
+                    registrarOrden();
+                    break;
 
-                    case 2:
-                        registrarOrden();
-                        break;
+                case "REGISTRAR_CUADRILLA":
+                    registrarCuadrilla();
+                    break;
 
-                    case 3:
-                        registrarCuadrilla();
-                        break;
+                case "CREAR_JORNADA":
+                    crearJornada();
+                    break;
 
-                    case 4:
-                        crearJornada();
-                        break;
+                case "ASIGNAR":
+                    asignarOrden();
+                    break;
 
-                    case 5:
-                        asignarOrden();
-                        break;
+                case "RETIRAR":
+                    retirarOrden();
+                    break;
 
-                    case 6:
-                        retirarOrden();
-                        break;
+                case "INICIAR":
+                    iniciarJornada();
+                    break;
 
-                    case 7:
-                        iniciarJornada();
-                        break;
+                case "RESULTADO":
+                    registrarResultado();
+                    break;
 
-                    case 8:
-                        registrarResultado();
-                        break;
+                case "ORDENES":
+                    consultarOrdenes();
+                    break;
 
-                    case 9:
-                        vista.mostrarOrdenes(
-                                sistema.consultarOrdenes());
-                        break;
+                case "CUADRILLAS":
+                    consultarCuadrillas();
+                    break;
 
-                    case 10:
-                        vista.mostrarCuadrillas(
-                                sistema.consultarCuadrillas());
-                        break;
+                case "REPORTES":
+                    mostrarReportes();
+                    break;
 
-                    case 11:
-                        mostrarReportes();
-                        break;
-
-                    case 0:
-                        continuar = false;
-                        break;
-
-                    default:
-                        vista.mostrarMensaje(
-                                "Opción inválida. Selecciona de 0 a 11.");
-                }
-
-            } catch (IllegalArgumentException | IllegalStateException e) {
-                vista.mostrarMensaje(
-                        "Operación rechazada: " + e.getMessage());
-
-            } catch (NoSuchElementException e) {
-                continuar = false;
+                default:
+                    vista.mostrarError("Operación desconocida.");
             }
-        }
 
-        vista.mostrarMensaje("Programa finalizado.");
+        } catch (CancellationException e) {
+            vista.mostrarMensaje(
+                    "Operación cancelada. No se realizaron cambios.");
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            vista.mostrarError(e.getMessage());
+        }
     }
 
     private OrdenDeServicio leerDatosServicio() {
         int categoria = vista.elegirCategoria();
 
-        String codigo = vista.leerTexto("Código: ");
-        String cliente = vista.leerTexto("Cliente: ");
-        String direccion = vista.leerTexto("Dirección: ");
+        String codigo = vista.pedirTexto("Código de orden:");
+        String cliente = vista.pedirTexto("Nombre del cliente:");
+        String direccion = vista.pedirTexto("Dirección:");
+        double horas = vista.pedirDecimal("Horas estimadas:");
 
-        double horas = vista.leerDecimal("Horas estimadas: ");
+        boolean metro = vista.pedirConfirmacion(
+                "¿La zona es metropolitana?\n"
+                + "Sí: metropolitana. No: periférica."
+        );
 
-        boolean metropolitana = vista.leerSiNo(
-                "¿Zona metropolitana?");
-
-        // El switch solo selecciona qué objeto construir.
-        // Las reglas del servicio se resuelven en sus clases.
+        // Solo se selecciona qué objeto construir.
+        // Las reglas particulares están en las clases del modelo.
         switch (categoria) {
             case 1:
                 return new Diagnostico(
@@ -129,50 +119,38 @@ public class ControladorTecniHogar {
                         cliente,
                         direccion,
                         horas,
-                        metropolitana
+                        metro
                 );
 
             case 2:
-                int puntos = vista.leerEntero(
-                        "Cantidad de puntos: ");
-
                 return new Instalacion(
                         codigo,
                         cliente,
                         direccion,
                         horas,
-                        metropolitana,
-                        puntos
+                        metro,
+                        vista.pedirEntero("Cantidad de puntos:")
                 );
 
             case 3:
-                int puntosCertificados = vista.leerEntero(
-                        "Cantidad de puntos: ");
-
-                double materiales = vista.leerDecimal(
-                        "Valor de materiales (Q): ");
-
                 return new InstalacionElectricaCertificada(
                         codigo,
                         cliente,
                         direccion,
                         horas,
-                        metropolitana,
-                        puntosCertificados,
-                        materiales
+                        metro,
+                        vista.pedirEntero("Cantidad de puntos:"),
+                        vista.pedirDecimal("Valor de materiales (Q):")
                 );
 
             case 4:
-                int btu = vista.leerEntero(
-                        "Capacidad en BTU: ");
-
                 return new MantenimientoAireAcondicionado(
                         codigo,
                         cliente,
                         direccion,
                         horas,
-                        metropolitana,
-                        btu
+                        metro,
+                        vista.pedirEntero("Capacidad en BTU:")
                 );
 
             default:
@@ -181,136 +159,163 @@ public class ControladorTecniHogar {
         }
     }
 
-    private void validarCotizacion(OrdenDeServicio orden) {
+    private void generarCotizacion() {
+        OrdenDeServicio orden = leerDatosServicio();
         double costo = orden.calcularTotal();
 
         if (!Double.isFinite(costo) || costo <= 0) {
             throw new IllegalArgumentException(
-                    "El costo calculado está fuera de rango.");
+                    "Costo fuera de rango.");
         }
-    }
 
-    private void cotizar() {
-        OrdenDeServicio orden = leerDatosServicio();
-
-        validarCotizacion(orden);
-        vista.mostrarCotizacion(orden);
-
-        boolean acepta = vista.leerSiNo(
-                "¿Acepta y desea registrar esta orden?");
-
-        if (acepta) {
-            sistema.registrarOrden(orden);
-
-            vista.mostrarMensaje(
-                    "Orden registrada y cobrada. Estado: PENDIENTE.");
-        } else {
-            vista.mostrarMensaje(
-                    "Cotización finalizada sin registro ni cobro.");
-        }
+        vista.mostrarResultado(String.format(
+                Locale.US,
+                "COTIZACIÓN\n\n"
+                        + "Servicio: %s\n"
+                        + "Cliente: %s\n"
+                        + "Costo: Q%.2f\n"
+                        + "Atención: %d días hábiles.\n\n"
+                        + "No se registró la orden ni se generaron ingresos.",
+                orden.obtenerCategoria(),
+                orden.getNombreCliente(),
+                costo,
+                orden.calcularDiasAtencion()
+        ));
     }
 
     private void registrarOrden() {
         OrdenDeServicio orden = leerDatosServicio();
+        double costo = orden.calcularTotal();
+
+        if (!Double.isFinite(costo) || costo <= 0) {
+            throw new IllegalArgumentException(
+                    "Costo fuera de rango.");
+        }
+
+        boolean acepta = vista.pedirConfirmacion(String.format(
+                Locale.US,
+                "Costo: Q%.2f. Atención: %d días hábiles.\n"
+                        + "¿Acepta registrar y cobrar la orden?",
+                costo,
+                orden.calcularDiasAtencion()
+        ));
+
+        if (!acepta) {
+            return;
+        }
 
         sistema.registrarOrden(orden);
-        vista.mostrarCotizacion(orden);
 
-        vista.mostrarMensaje(
-                "Orden registrada y cobrada. Estado: PENDIENTE.");
+        vista.mostrarResultado(String.format(
+                Locale.US,
+                "ORDEN REGISTRADA\n\n"
+                        + "Código: %s\n"
+                        + "Cobro: Q%.2f\n"
+                        + "Estado: PENDIENTE\n"
+                        + "Visitas: 0",
+                orden.getCodigo(),
+                costo
+        ));
     }
 
     private void registrarCuadrilla() {
-        String codigo = vista.leerTexto(
-                "Código de cuadrilla: ");
+        String codigo = vista.pedirTexto(
+                "Código de cuadrilla:");
 
-        double capacidad = vista.leerDecimal(
-                "Capacidad de horas: ");
+        double horas = vista.pedirDecimal(
+                "Capacidad máxima de horas:");
 
-        boolean certificada = vista.leerSiNo(
-                "¿Certificada en refrigeración?");
+        boolean certificada = vista.pedirConfirmacion(
+                "¿Está certificada en refrigeración?");
 
         Cuadrilla cuadrilla = new Cuadrilla(
                 codigo,
-                capacidad,
+                horas,
                 certificada
         );
 
         sistema.registrarCuadrilla(cuadrilla);
-        vista.mostrarMensaje("Cuadrilla registrada.");
+
+        vista.mostrarResultado(
+                "Cuadrilla " + codigo + " registrada correctamente.");
     }
 
     private void crearJornada() {
-        vista.mostrarCuadrillas(
-                sistema.consultarCuadrillas());
+        String codigo = vista.pedirTexto(
+                "Código de la nueva jornada:");
 
-        String codigo = vista.leerTexto(
-                "Código de nueva jornada: ");
+        String cuadrilla = vista.pedirTexto(
+                "Código de cuadrilla:");
 
-        String codigoCuadrilla = vista.leerTexto(
-                "Código de cuadrilla: ");
+        sistema.crearJornada(codigo, cuadrilla);
 
-        sistema.crearJornada(codigo, codigoCuadrilla);
-
-        vista.mostrarMensaje(
-                "Jornada creada en preparación.");
+        vista.mostrarResultado(
+                "Jornada " + codigo
+                + " creada en preparación con la cuadrilla "
+                + cuadrilla + ".");
     }
 
     private void asignarOrden() {
-        String jornada = vista.leerTexto(
-                "Código de jornada: ");
+        String jornada = vista.pedirTexto(
+                "Código de jornada:");
 
-        String orden = vista.leerTexto(
-                "Código de orden: ");
+        String orden = vista.pedirTexto(
+                "Código de orden:");
 
         sistema.asignarOrden(jornada, orden);
 
-        vista.mostrarMensaje(
-                "Orden asignada sin cobro adicional.");
+        vista.mostrarResultado(
+                "Orden " + orden + " asignada a " + jornada
+                + ".\nNo se generaron cobros.");
     }
 
     private void retirarOrden() {
-        String jornada = vista.leerTexto(
-                "Código de jornada: ");
+        String jornada = vista.pedirTexto(
+                "Código de jornada:");
 
-        String orden = vista.leerTexto(
-                "Código de orden: ");
+        String orden = vista.pedirTexto(
+                "Código de orden:");
 
         sistema.retirarOrden(jornada, orden);
 
-        vista.mostrarMensaje(
-                "Orden retirada; vuelve a pendiente sin cobro.");
+        vista.mostrarResultado(
+                "Orden " + orden + " retirada.\n"
+                + "Estado: PENDIENTE.\n"
+                + "Sin cargos adicionales.");
     }
 
     private void iniciarJornada() {
-        String codigo = vista.leerTexto(
-                "Código de jornada: ");
+        String codigo = vista.pedirTexto(
+                "Código de jornada:");
 
-        double anterior = sistema.calcularIngresoPorConcepto(
+        double antes = sistema.calcularIngresoPorConcepto(
                 ConceptoIngreso.VISITA_ADICIONAL);
 
         sistema.iniciarJornada(codigo);
 
-        double actual = sistema.calcularIngresoPorConcepto(
+        double despues = sistema.calcularIngresoPorConcepto(
                 ConceptoIngreso.VISITA_ADICIONAL);
 
-        double cargo = actual - anterior;
+        double cargo = despues - antes;
 
-        vista.mostrarMensaje(String.format(
+        vista.mostrarResultado(String.format(
                 Locale.US,
-                "Jornada iniciada. Cargos adicionales: Q%.2f",
+                "Jornada %s iniciada.\n"
+                        + "Órdenes en atención.\n"
+                        + "Cargos por visitas adicionales: Q%.2f",
+                codigo,
                 cargo
         ));
     }
 
     private void registrarResultado() {
-        String jornada = vista.leerTexto(
-                "Código de jornada: ");
+        String jornada = vista.pedirTexto(
+                "Código de jornada:");
 
-        String orden = vista.leerTexto(
-                "Código de orden: ");
+        String orden = vista.pedirTexto(
+                "Código de orden:");
 
-        ResultadoVisita resultado = vista.leerResultado();
+        ResultadoVisita resultado = vista.elegirResultado();
 
         sistema.registrarResultado(
                 jornada,
@@ -318,35 +323,109 @@ public class ControladorTecniHogar {
                 resultado
         );
 
-        vista.mostrarMensaje(
-                "Resultado registrado. "
-                + "Si era el último, la jornada quedó cerrada.");
+        vista.mostrarResultado(
+                "Resultado registrado: " + resultado + ".\n"
+                + "Si era el último resultado, la jornada quedó cerrada.\n"
+                + "Consulta las órdenes para ver su estado actualizado.");
+    }
+
+    private void consultarOrdenes() {
+        StringBuilder texto = new StringBuilder("ÓRDENES\n\n");
+
+        for (OrdenDeServicio orden : sistema.consultarOrdenes()) {
+            texto.append(String.format(
+                    Locale.US,
+                    "%s | %s\n"
+                            + "Cliente: %s\n"
+                            + "Dirección: %s\n"
+                            + "Zona: %s\n"
+                            + "Horas estimadas: %.2f\n"
+                            + "Estado: %s\n"
+                            + "Visitas: %d/%d\n"
+                            + "Costo del servicio: Q%.2f\n"
+                            + "Atención: %d días hábiles\n\n",
+                    orden.getCodigo(),
+                    orden.obtenerCategoria(),
+                    orden.getNombreCliente(),
+                    orden.getDireccion(),
+                    orden.esMetropolitana()
+                            ? "Metropolitana" : "Periférica",
+                    orden.getHorasEstimadas(),
+                    orden.getEstado(),
+                    orden.getCantidadVisitas(),
+                    orden.obtenerMaximoVisitas(),
+                    orden.calcularTotal(),
+                    orden.calcularDiasAtencion()
+            ));
+        }
+
+        vista.mostrarResultado(texto.toString());
+    }
+
+    private void consultarCuadrillas() {
+        StringBuilder texto = new StringBuilder("CUADRILLAS\n\n");
+
+        for (Cuadrilla cuadrilla : sistema.consultarCuadrillas()) {
+            texto.append(String.format(
+                    Locale.US,
+                    "%s | Capacidad: %.2f horas | Refrigeración: %s\n",
+                    cuadrilla.getCodigo(),
+                    cuadrilla.getCapacidadHoras(),
+                    cuadrilla.estaCertificadaEnRefrigeracion()
+                            ? "Sí" : "No"
+            ));
+        }
+
+        vista.mostrarResultado(texto.toString());
     }
 
     private void mostrarReportes() {
-        vista.mostrarMensaje(
-                "\nÓRDENES POR CATEGORÍA Y ESTADO");
+        StringBuilder texto = new StringBuilder(
+                "ÓRDENES POR CATEGORÍA Y ESTADO\n\n");
 
-        vista.mostrarMensaje(
+        texto.append(
                 sistema.contarOrdenesPorCategoriaYEstado());
 
-        vista.mostrarMensaje("INGRESOS");
-
-        vista.mostrarIngresos(
+        texto.append(String.format(
+                Locale.US,
+                "\nINGRESOS\n"
+                        + "Registro: Q%.2f\n"
+                        + "Visitas adicionales: Q%.2f\n"
+                        + "Total: Q%.2f\n\n",
                 sistema.calcularIngresoPorConcepto(
                         ConceptoIngreso.REGISTRO),
-
                 sistema.calcularIngresoPorConcepto(
                         ConceptoIngreso.VISITA_ADICIONAL),
+                sistema.calcularIngresoTotal()
+        ));
 
-                sistema.calcularIngresoTotal(),
+        texto.append(
+                sistema.calcularIngresosPorCategoria());
 
-                sistema.calcularIngresosPorCategoria()
-        );
+        texto.append("\nJORNADAS ABIERTAS\n");
 
-        vista.mostrarMensaje("JORNADAS ABIERTAS");
+        if (sistema.consultarJornadasAbiertas().isEmpty()) {
+            texto.append("No hay jornadas abiertas.\n");
+        }
 
-        vista.mostrarJornadas(
-                sistema.consultarJornadasAbiertas());
+        for (Jornada jornada : sistema.consultarJornadasAbiertas()) {
+            texto.append(String.format(
+                    Locale.US,
+                    "%s | Cuadrilla: %s | "
+                            + "Horas asignadas: %.2f | Disponibles: %.2f\n",
+                    jornada.getCodigo(),
+                    jornada.getCuadrilla().getCodigo(),
+                    jornada.calcularHorasAsignadas(),
+                    jornada.calcularCapacidadDisponible()
+            ));
+
+            for (OrdenDeServicio orden : jornada.getOrdenes()) {
+                texto.append("  Orden: ")
+                        .append(orden.getCodigo())
+                        .append("\n");
+            }
+        }
+
+        vista.mostrarResultado(texto.toString());
     }
 }

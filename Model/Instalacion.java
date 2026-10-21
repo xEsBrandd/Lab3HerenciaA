@@ -31,12 +31,8 @@ public class Instalacion extends OrdenDeServicio {
     protected double calcularHorasFacturables() {
         double horasPorPuntos = cantidadPuntos * 0.75;
 
-        double horas = Math.max(
-                getHorasEstimadas(),
-                horasPorPuntos
-        );
-
-        return Math.ceil(horas);
+        return Math.ceil(
+                Math.max(getHorasEstimadas(), horasPorPuntos));
     }
 
     @Override

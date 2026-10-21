@@ -1,17 +1,21 @@
 import Controllers.ControladorTecniHogar;
 import Model.SistemaTecniHogar;
-import View.VistaConsola;
+import View.Vista1;
+
+import javax.swing.SwingUtilities;
 
 public class Main {
 
     public static void main(String[] args) {
-        SistemaTecniHogar sistema = new SistemaTecniHogar();
+        SwingUtilities.invokeLater(() -> {
+            SistemaTecniHogar sistema = new SistemaTecniHogar();
 
-        VistaConsola vista = new VistaConsola();
+            Vista1 vista = new Vista1();
 
-        ControladorTecniHogar controlador =
-                new ControladorTecniHogar(sistema, vista);
+            ControladorTecniHogar controlador =
+                    new ControladorTecniHogar(sistema, vista);
 
-        controlador.ejecutar();
+            controlador.iniciar();
+        });
     }
 }

@@ -38,7 +38,7 @@ public class Jornada {
         }
     }
 
-    // Evita errores de suma decimal al comprobar la capacidad.
+    // Suma decimal para evitar errores como 0.1 + 0.2.
     private BigDecimal horasAsignadas() {
         BigDecimal total = BigDecimal.ZERO;
 
@@ -58,7 +58,8 @@ public class Jornada {
                 || !orden.tieneVisitasDisponibles()) {
 
             throw new IllegalStateException(
-                    "La orden debe estar pendiente y tener visitas disponibles.");
+                    "La orden debe estar pendiente "
+                    + "y tener visitas disponibles.");
         }
 
         if (!orden.esCompatible(cuadrilla)) {
